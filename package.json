@@ -3,6 +3,7 @@
   "module": "src/index.ts",
   "type": "module",
   "scripts": {
+    "run": "bun run ./src/index.ts",
     "build": "bun build src/index.ts --target bun --compile --outfile dist/app"
   },
   "devDependencies": {
@@ -12,6 +13,7 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
+    "@azure/openai": "^1.0.0-beta.12",
     "discord.js": "^14.14.1"
   }
 }
