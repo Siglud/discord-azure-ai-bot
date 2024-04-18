@@ -10,6 +10,9 @@ import {
     TextInputStyle,
     ActionRowBuilder,
     SlashCommandStringOption,
+    type CacheType,
+    CommandInteraction,
+    Message,
 } from "discord.js"
 import gpt from "./AzureGPT.ts"
 import type {
@@ -17,7 +20,7 @@ import type {
     ChatRequestMessage,
     ChatRequestUserMessage,
 } from "@azure/openai"
-
+import { config } from "dotenv"
 
 const commands = [
     new SlashCommandBuilder()
@@ -33,9 +36,11 @@ const commands = [
         .addStringOption(new SlashCommandStringOption().setName("message").setRequired(true).setDescription("Your prompt").setMinLength(1).setMaxLength(800)),
 ]
 
+config()
+
 const TOKEN = process.env.DISCORD_TOKEN ?? ""
 const CLIENT_ID = process.env.DISCORD_CLIENT_ID ?? ""
-// const GUILD_ID = process.env.DISCORD_GUILD_ID ?? ""
+const GUILD_ID = process.env.DISCORD_GUILD_ID?.split(',') ?? []
 
 const USER_SYSTEM_PROMPT: Map<string, string> = new Map()
 const USER_HISTORY: Map<string, ChatRequestMessage[]> = new Map()
@@ -55,7 +60,7 @@ try {
 
 const client = new Client({
     intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers, GatewayIntentBits.GuildMessages,
-              GatewayIntentBits.MessageContent, GatewayIntentBits.DirectMessages],
+    GatewayIntentBits.MessageContent, GatewayIntentBits.DirectMessages],
 })
 
 client.once(Events.ClientReady, async () => {
@@ -77,6 +82,11 @@ client.on(Events.InteractionCreate, async (interaction) => {
     }
 
     if (!interaction.isChatInputCommand()) return
+
+    if (GUILD_ID.length > 0 && !GUILD_ID.includes(interaction.guildId ?? '')) {
+        await interaction.reply("Unauthorized!")
+        return
+    }
 
     const command = interaction.commandName
 
@@ -110,7 +120,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
         USER_HISTORY.set(userId, [])
 
         const reply = await get_gpt_response(userId, message)
-        await interaction.editReply(reply)
+        await replyMessage(interaction, reply)
 
         return
     }
@@ -132,9 +142,26 @@ client.on(Events.MessageCreate, async (interaction) => {
     if (reply.author.bot) {
         const userId = interaction.author.id
         const reply = await get_gpt_response(userId, message)
-        await interaction.reply(reply)
+        await replyMessage(interaction, reply)
     }
 })
+
+async function replyMessage(interaction: CommandInteraction<CacheType> | Message<boolean>, message: string) {
+    if (message.length <= 2000) {
+        await interaction.reply(message)
+        return
+    }
+    // split message into multiple message with length 2000 if it's too long
+    let n = message.length;
+    const MAX_LENGTH = 2000;
+    await interaction.reply(message.slice(0, 2000))
+
+    const follow = interaction instanceof CommandInteraction ? interaction.followUp : (msg: string) => interaction.channel.send({ content: msg, reply: { messageReference: interaction } });
+
+    for (let index = 2000; index < n; index += 2000) {
+        follow(message.slice(index, Math.min(index + 2000, n)))
+    }
+}
 
 async function get_gpt_response(userId: string, message: string): Promise<string> {
     const system = getUserSystemPrompt(userId)

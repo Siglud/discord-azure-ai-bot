@@ -7,6 +7,9 @@ import {
     type ChatRequestSystemMessage, type ChatRequestUserMessage,
     OpenAIClient,
 } from "@azure/openai"
+import { config } from "dotenv"
+
+config()
 
 const AI_MODEL = process.env.AI_MODEL || ""
 const AI_KEY = process.env.AI_KEY || ""
