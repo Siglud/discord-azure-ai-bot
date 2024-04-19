@@ -20,7 +20,6 @@ import type {
     ChatRequestMessage,
     ChatRequestUserMessage,
 } from "@azure/openai"
-import { config } from "dotenv"
 
 const commands = [
     new SlashCommandBuilder()
@@ -35,8 +34,6 @@ const commands = [
         .setDescription("Start new chat with bot")
         .addStringOption(new SlashCommandStringOption().setName("message").setRequired(true).setDescription("Your prompt").setMinLength(1).setMaxLength(800)),
 ]
-
-config()
 
 const TOKEN = process.env.DISCORD_TOKEN ?? ""
 const CLIENT_ID = process.env.DISCORD_CLIENT_ID ?? ""
