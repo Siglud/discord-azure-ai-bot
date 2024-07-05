@@ -117,7 +117,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
         USER_HISTORY.set(userId, [])
 
         const reply = await get_gpt_response(userId, message)
-        await replyMessage(interaction, reply)
+        await replyMessage(interaction, reply, (s) => interaction.editReply(s))
 
         return
     }
@@ -139,19 +139,19 @@ client.on(Events.MessageCreate, async (interaction) => {
     if (reply.author.bot) {
         const userId = interaction.author.id
         const reply = await get_gpt_response(userId, message)
-        await replyMessage(interaction, reply)
+        await replyMessage(interaction, reply, (s) => interaction.reply(s))
     }
 })
 
-async function replyMessage(interaction: CommandInteraction<CacheType> | Message<boolean>, message: string) {
+async function replyMessage(interaction: CommandInteraction<CacheType> | Message<boolean>, message: string, send: (s: string) => Promise<Message<boolean>>) {
     if (message.length <= 2000) {
-        await interaction.reply(message)
+        await send(message)
         return
     }
     // split message into multiple message with length 2000 if it's too long
     let n = message.length;
     const MAX_LENGTH = 2000;
-    await interaction.reply(message.slice(0, 2000))
+    await send(message.slice(0, 2000))
 
     const follow = interaction instanceof CommandInteraction ? interaction.followUp : (msg: string) => interaction.channel.send({ content: msg, reply: { messageReference: interaction } });
 
