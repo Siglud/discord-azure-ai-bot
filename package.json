@@ -10,10 +10,10 @@
     "@types/bun": "latest"
   },
   "peerDependencies": {
-    "typescript": "^5.0.0"
+    "typescript": "^5.4.5"
   },
   "dependencies": {
-    "@azure/openai": "^1.0.0-beta.12",
-    "discord.js": "^14.14.1"
+    "@azure/openai": "^1.0.0-beta.13",
+    "discord.js": "^14.21.0"
   }
 }
